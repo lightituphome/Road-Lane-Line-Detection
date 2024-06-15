@@ -1,0 +1,162 @@
+
+Project Overview
+Road Lane Line Detection is a crucial project for enhancing the safety and navigation of autonomous
+vehicles and advanced driver-assistance systems (ADAS). This project identifies and tracks lane markings
+on the road using image processing techniques, helping vehicles stay within lanes and make informed driving decisions.
+
+ Objectives
+Research and understand existing lane detection algorithms.
+Develop a robust computer vision algorithm for detecting road lane lines.
+Test and fine-tune the algorithm using various datasets.
+Document your work, including code, methodology, and results.
+
+Steps Involved
+
+1. Grayscale Conversion
+Convert the input image to grayscale to simplify the image processing and reduce computational complexity.
+----
+def grayscale(image):
+    return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+----
+
+ 2. Gaussian Blur
+Apply Gaussian blur to the grayscale image to reduce noise and smooth the image, which helps in better edge detection.
+```
+def canny(image):
+    gray = grayscale(image)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    canny = cv2.Canny(blur, 50, 150)
+    return canny
+```
+
+3. Canny Edge Detection
+Use the Canny edge detection algorithm to detect edges in the image, which are potential lane lines.
+```
+def canny(image):
+    gray = grayscale(image)
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    canny = cv2.Canny(blur, 50, 150)
+    return canny
+```
+
+ 4. Region of Interest Masking
+Apply a mask to the image to focus on the region of interest where lane lines are expected to be found.
+```
+def region_of_interest(image):
+    height = image.shape[0]
+    polygons = np.array([[(200, height), (1100, height), (550, 250)]])
+    mask = np.zeros_like(image)
+    cv2.fillPoly(mask, polygons, 255)
+    masked_image = cv2.bitwise_and(image, mask)
+    return masked_image
+```
+
+ 5. Hough Transform
+Apply the Hough Transform to detect lines in the edge-detected image.
+```
+def hough_transform(image):
+    return cv2.HoughLinesP(image, 2, np.pi / 180, 100, np.array([]), minLineLength=40, maxLineGap=5)
+```
+
+ 6. Display Lines
+Draw the detected lines on a blank image.
+```
+def display_lines(image, lines):
+    line_image = np.zeros_like(image)
+    if lines is not None:
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
+    return line_image
+```
+
+7. Combine Images
+Overlay the line image on the original image to show the detected lane lines.
+```
+def add_weighted(image, initial_image, α=0.8, β=1., γ=0.):
+    return cv2.addWeighted(initial_image, α, image, β, γ)
+```
+
+ Full Pipeline Function
+Combine all the steps into a single function to detect lane lines.
+```
+def detect_lane_lines(image):
+    canny_image = canny(image)
+    cropped_image = region_of_interest(canny_image)
+    lines = hough_transform(cropped_image)
+    line_image = display_lines(image, lines)
+    combined_image = add_weighted(line_image, image)
+    return combined_image
+```
+
+Running the Code in Google Colab
+
+1. **Install Required Libraries**
+   ```
+   !pip install opencv-python-headless matplotlib
+   ```
+
+2. **Import Libraries and Define Functions**
+   ```
+   import cv2
+   import numpy as np
+   import matplotlib.pyplot as plt
+   from google.colab.patches import cv2_imshow
+   from google.colab import files
+   
+   def grayscale(image):
+       return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+   def canny(image):
+       gray = grayscale(image)
+       blur = cv2.GaussianBlur(gray, (5, 5), 0)
+       canny = cv2.Canny(blur, 50, 150)
+       return canny
+
+   def region_of_interest(image):
+       height = image.shape[0]
+       polygons = np.array([[(200, height), (1100, height), (550, 250)]])
+       mask = np.zeros_like(image)
+       cv2.fillPoly(mask, polygons, 255)
+       masked_image = cv2.bitwise_and(image, mask)
+       return masked_image
+
+   def display_lines(image, lines):
+       line_image = np.zeros_like(image)
+       if lines is not None:
+           for line in lines:
+               for x1, y1, x2, y2 in line:
+                   cv2.line(line_image, (x1, y1), (x2, y2), (255, 0, 0), 10)
+       return line_image
+
+   def hough_transform(image):
+       return cv2.HoughLinesP(image, 2, np.pi / 180, 100, np.array([]), minLineLength=40, maxLineGap=5)
+
+   def add_weighted(image, initial_image, α=0.8, β=1., γ=0.):
+       return cv2.addWeighted(initial_image, α, image, β, γ)
+
+   def detect_lane_lines(image):
+       canny_image = canny(image)
+       cropped_image = region_of_interest(canny_image)
+       lines = hough_transform(cropped_image)
+       line_image = display_lines(image, lines)
+       combined_image = add_weighted(line_image, image)
+       return combined_image
+   ```
+
+3. **Upload and Process Image**
+   ```
+   uploaded = files.upload()
+
+   for fn in uploaded.keys():
+       image = cv2.imread(fn)
+       lane_lines_image = detect_lane_lines(image)
+       cv2_imshow(lane_lines_image)
+   ```
+
+ Conclusion
+
+This project integrates various image processing techniques to detect lane lines in real-time or 
+static images, providing a foundational component for autonomous driving and ADAS technologies. 
+Adjusting parameters such as the region of interest, Canny thresholds, and Hough Transform settings 
+can improve accuracy based on specific use cases.
